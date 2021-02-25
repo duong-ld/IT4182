@@ -1,14 +1,18 @@
 //
-//  main.c
+//  week1.c
 //  indexWord
 //
 //  Created by Lương Dương on 24/02/2021
+//
+//  Link to github:
+//  https://github.com/DuongLD-140800/IT4182.git
+//
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "constain.h"
-#include "linkList.h"
+#include "const.h"
+#include "singleLList.h"
 
 // global var //
 char **G_strStop = NULL;

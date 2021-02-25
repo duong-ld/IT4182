@@ -1,5 +1,5 @@
 //
-//  linkList.c
+//  singleLList.c
 //  indexWord
 //
 //  Created by Lương Dương on 24/02/2021
@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "constain.h"
-#include "linkList.h"
+#include "const.h"
+#include "singleLList.h"
  
 node CreateNode(char* value, int line){
     node temp;
@@ -63,8 +63,7 @@ node DelTail(node head){
     while(p->next->next != NULL){
         p = p->next;
     }
-    p->next = p->next->next; // Cho next bằng NULL
-    // Hoặc viết p->next = NULL cũng được
+    p->next = p->next->next;
     return head;
 }
 int Update(node head, char* value, int line){

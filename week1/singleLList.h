@@ -1,5 +1,5 @@
 //
-//  linkList.h
+//  singleLList.h
 //  indexWord
 //
 //  Created by Lương Dương on 24/02/2021.
@@ -28,4 +28,4 @@ node InitHead(void);
 void travel(node head);
 int lenOfNode(node head);
 
-#endif /* linkList_h */
+#endif /* singleLList_h */

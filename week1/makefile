@@ -1,6 +1,6 @@
 CC = gcc
-DEPS = linkList.h constain.h
-OBJ = linkList.o main.o
+DEPS = singleLList.h const.h
+OBJ = singleLList.o week1.o
 TARGET = ex1
 
 

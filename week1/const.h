@@ -1,5 +1,5 @@
 //
-//  constain.h
+//  const.h
 //  indexWord
 //
 //  Created by Lương Dương on 24/02/2021.
@@ -13,4 +13,4 @@
 #define C_MAX_FREQ 2000     // number of frequency of word max
 #define C_MAX_LENO 10000    // max len of output for one word
 
-#endif /* constain_h */
+#endif /* const_h */
