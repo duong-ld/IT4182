@@ -1,0 +1,11 @@
+Program Example1; (* Example 1 *)
+VAR I:FLOAT;
+    D:STRING;
+Begin
+I:= 1.5;
+I:= .5;
+I:= -.5;
+I:= 5.;
+I:= 5;
+D:="hello";
+End. (* Example 1 *)

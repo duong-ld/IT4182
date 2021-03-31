@@ -165,7 +165,6 @@ void printResult(node head) {
         return;
     }
     for (int j = 0; j < i; j++) {
-        printf("%s\n", str[j]);
         fprintf(fResult, "%s\n", str[j]);
     }
     // clean
