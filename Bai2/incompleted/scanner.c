@@ -354,7 +354,6 @@ int scan(char *fileName) {
     free(token);
     token = getToken();
   }
-
   free(token);
   closeInputStream();
   return IO_SUCCESS;

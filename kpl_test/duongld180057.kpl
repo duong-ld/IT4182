@@ -1,0 +1,28 @@
+PROGRAM Hello;
+
+
+VAR arr: ARRAY (.10.) OF INTEGER;
+    i: INTEGER; 
+    j: INTEGER;
+    min: INTEGER;
+    check: INTEGER;
+
+BEGIN
+    check := 0;
+    min := 99999999;
+    for i := 0 TO 9 DO
+        BEGIN
+            arr(.i.) := 9 + i;
+            if arr(.i.) < min THEN min := arr(.i.);
+        END;
+    CALL WRITEI(min);
+    CALL WRITELN;
+    
+    for i := 0 TO 9 DO
+        BEGIN
+            for j := i + 1 TO 9 DO
+                if arr(. i .) = arr(. j .) THEN check := 1;
+        END;
+    CALL WRITEI(check);
+    CALL WRITELN;
+END.
