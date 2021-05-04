@@ -20,6 +20,7 @@ struct {
   {"CHAR", KW_CHAR},
   {"ARRAY", KW_ARRAY},
   {"OF", KW_OF},
+  {"STRING", KW_STRING},
   {"FUNCTION", KW_FUNCTION},
   {"PROCEDURE", KW_PROCEDURE},
   {"BEGIN", KW_BEGIN},

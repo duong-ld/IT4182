@@ -211,6 +211,9 @@ void compileType(void) {
   case KW_CHAR:
     eat(KW_CHAR);
     break;
+  case KW_STRING:
+    eat(KW_STRING);
+    break;
   case TK_IDENT:
     eat(TK_IDENT);
     break;
@@ -303,6 +306,9 @@ void compileStatement(void) {
   case KW_FOR:
     compileForSt();
     break;
+  case KW_DO:
+    compileDoSt();
+    break;
     // EmptySt needs to check FOLLOW tokens
   case SB_SEMICOLON:
   case KW_END:
@@ -381,6 +387,15 @@ void compileForSt(void) {
   eat(KW_DO);
   compileStatement();
   assert("For statement parsed ....");
+}
+
+void compileDoSt(void) {
+  assert("Passing a do statement ....");
+  eat(KW_DO);
+  compileStatement();
+  eat(KW_WHILE);
+  compileCondition();
+  assert("Do statement parsed ....");
 }
 
 void compileArguments(void) {
@@ -484,6 +499,10 @@ void compileTerm2(void) {
     eat(SB_SLASH);
     compileFactor();
     compileTerm2();
+  } else if (lookAhead->tokenType == SB_MD) {
+    eat(SB_MD);
+    compileFactor();
+    compileTerm2();
   }
 }
 
@@ -497,6 +516,8 @@ void compileFactor(void) {
     eat(TK_NUMBER);
   else if(lookAhead->tokenType == TK_CHAR) 
     eat(TK_CHAR);
+  else if(lookAhead->tokenType == TK_STRING)
+    eat(TK_STRING);
   else if(lookAhead->tokenType == TK_IDENT) {
     eat(TK_IDENT);
     if(lookAhead->tokenType == SB_LSEL)
