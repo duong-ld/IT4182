@@ -282,7 +282,8 @@ ConstantValue* compileConstant2(void) {
   case TK_IDENT:
     eat(TK_IDENT);
     obj = checkDeclaredConstant(currentToken->string);
-    if (obj->constAttrs->value->type == TP_INT || obj->constAttrs->value->type == TP_DOUBLE)
+    if (obj->constAttrs->value->type == TP_INT || obj->constAttrs->value->type == TP_DOUBLE
+        || obj->constAttrs->value->type == TP_CHAR || obj->constAttrs->value->type == TP_STRING)
       constValue = duplicateConstantValue(obj->constAttrs->value);
     else
       error(ERR_UNDECLARED_NUMBER_CONSTANT,currentToken->lineNo, currentToken->colNo);
@@ -356,6 +357,10 @@ Type* compileBasicType(void) {
   case KW_DOUBLE:
     eat(KW_DOUBLE);
     type = makeDoubleType();
+    break;
+  case KW_STRING:
+    eat(KW_STRING);
+    type = makeStringType();
     break;
   default:
     error(ERR_INVALID_BASICTYPE, lookAhead->lineNo, lookAhead->colNo);

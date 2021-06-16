@@ -3,6 +3,7 @@ Program Example6;
             c2 = 'a';
             c3 = "Duong";
             c4 = 3.1415926;
+            c5 = c3;
 
    Type     t1 = array(. 10 .) of integer;
             t2 = array(. 10 .) of double;
@@ -18,9 +19,9 @@ Program Example6;
        f := c1;
      End;
 
-   Function FD(p1 : double; Var p2 : char) : double;
+   Function FD(p1 : double; Var p2 : char) : string;
      Begin
-       fd := c4;
+       fd := c5;
      End;
 
    Function FV : integer;
@@ -40,10 +41,10 @@ Program Example6;
             v5 : double;
      begin
 	      v3 := 'a';
-        v5 := f(c3,v3);
+        v1 := f(c3,v3);
         v4 := "Luong Duc Duong";
         v5 := c2 * 3 + 4 * 4.5;
-        v5 := fd(c2, v3);
+        v4 := fd(c2, v3);
      end;
 
 Begin

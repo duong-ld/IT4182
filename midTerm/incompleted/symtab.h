@@ -47,7 +47,7 @@ struct ConstantValue_ {
   union {
     int intValue;
     double doubleValue;
-    char stringValue[100];
+    char stringValue[MAX_STRING_LEN];
     char charValue;
   };
 };
