@@ -507,7 +507,7 @@ void compileAssignSt(void) {
   Type** LAssign = (Type**) calloc(MAX_ASSIGN, sizeof(Type*));
   Type** RAssign = (Type**) calloc(MAX_ASSIGN, sizeof(Type*));
   if (LAssign == NULL || RAssign == NULL) {
-    printf("Error");
+    printf("Error when calloc!");
     exit(1);
   }
 
@@ -530,6 +530,8 @@ void compileAssignSt(void) {
     }
   }
 
+  if (LAssign != NULL) free(LAssign);
+  if (RAssign != NULL) free(RAssign);
 }
 
 void compileCallSt(void) {

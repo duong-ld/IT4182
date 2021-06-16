@@ -39,8 +39,8 @@ Program Example6;
             v4 : string;
             v5 : double;
      begin
-	  v3 := 'a';
-        v1 := f(c3,v3);
+	      v3 := 'a';
+        v5 := f(c3,v3);
         v4 := "Luong Duc Duong";
         v5 := c2 * 3 + 4 * 4.5;
         v5 := fd(c2, v3);
