@@ -1,39 +1,16 @@
-PROGRAM Hello;
-
-
-VAR arr: ARRAY (.10.) OF INTEGER;
-    i: INTEGER; 
-    j: INTEGER;
-    min: INTEGER;
-    check: INTEGER;
-    ch: CHAR;
-    duong: STRING;
-
-BEGIN
-    check := 0;
-    min := 99999999;
-    ch := 'c';
-    duong := "Luong Duc Duong";
-    for i := 0 TO 9 DO
-        BEGIN
-            arr(.i.) := 9 + i;
-            if arr(.i.) < min THEN min := arr(.i.);
-        END;
-    CALL WRITEI(min);
-    CALL WRITELN;
-
-    DO
-        DO
-            check := check % 1
-    WHILE check > 0;
-
-
-
-    for i := 0 TO 9 DO
-        BEGIN
-            for j := i + 1 TO 9 DO
-                if arr(. i .) = arr(. j .) THEN check := 1;
-        END;
-    CALL WRITEI(check);
-    CALL WRITELN;
-END.
+Program Example1; (* Example 5 *)
+TYPE A = INTEGER;
+VAR I:INTEGER;
+    D: STRING ;
+Begin
+I:= 1;
+D:="hello";
+I:= 5%2;
+DO
+	WHILE I > 2 DO: 
+		BEGIN
+		DO x := 0 WHILE I > 2; 
+		I := I + 1; 
+		END
+	WHILE I < 5;
+End. (* Example 5 *)

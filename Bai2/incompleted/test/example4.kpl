@@ -4,10 +4,12 @@ VAR  I:INTEGER;
      P:INTEGER;  
      Q:INTEGER;
      C:CHAR;
+     D:STRING;
+     F:DOUBLE;
 
 PROCEDURE  HANOI(N:INTEGER;  S:INTEGER;  Z:INTEGER);
 BEGIN
-  IF  N ! = 0  THEN
+  IF  N != 0  THEN
     BEGIN
       CALL  HANOI(N-1,S,6-S-Z);
       I:=I+1;  
@@ -30,6 +32,8 @@ BEGIN
     END;
   P:=1;  
   Q:=2;
+  F:=3.14
+  D:="Duong"
   FOR  N:=2  TO  4  DO
     BEGIN  
       I:=0;  

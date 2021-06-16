@@ -105,7 +105,7 @@ void compileTypeDecl(void) {
   eat(TK_IDENT);
   eat(SB_EQ);
   compileType();
-  eat(SB_COLON);
+  eat(SB_SEMICOLON);
 }
 
 void compileVarDecls(void) {
@@ -370,7 +370,7 @@ void compileWhileSt(void) {
   assert("Parsing a while statement ....");
   eat(KW_WHILE);
   compileCondition();
-  eat(KW_THEN);
+  eat(KW_DO);
   compileStatement();
   compileElseSt();
   assert("While statement pased ....");
