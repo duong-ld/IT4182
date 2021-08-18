@@ -1,4 +1,4 @@
-/* 
+/*
  * @copyright (c) 2008, Hedspi, Hanoi University of Technology
  * @author Huu-Duc Nguyen
  * @version 1.0
@@ -40,11 +40,13 @@ typedef enum {
   ERR_TYPE_INCONSISTENCY,
   ERR_PARAMETERS_ARGUMENTS_INCONSISTENCY,
   ERR_ASSIGN_LEFT_LESS,
-  ERR_ASSIGN_LEFT_MORE
+  ERR_ASSIGN_LEFT_MORE,
+  ERR_TOO_MANY_ASSIGN,
+  ERR_FOR_NOT_INT_INDEX,
 } ErrorCode;
 
 void error(ErrorCode err, int lineNo, int colNo);
 void missingToken(TokenType tokenType, int lineNo, int colNo);
-void assert(char *msg);
+void assert(char* msg);
 
 #endif

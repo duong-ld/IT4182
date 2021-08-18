@@ -1,12 +1,12 @@
-/* 
+/*
  * @copyright (c) 2008, Hedspi, Hanoi University of Technology
  * @author Huu-Duc Nguyen
  * @version 1.0
  */
 #ifndef __PARSER_H__
 #define __PARSER_H__
-#include "token.h"
 #include "symtab.h"
+#include "token.h"
 
 #define MAX_ASSIGN 100
 
@@ -46,6 +46,7 @@ void compileElseSt(void);
 void compileWhileSt(void);
 void compileDoSt(void);
 void compileForSt(void);
+void compileRepeatSt(void);
 void compileArgument(Object* param);
 void compileArguments(ObjectNode* paramList);
 void compileCondition(void);
@@ -57,6 +58,6 @@ Type* compileTerm2(void);
 Type* compileFactor(void);
 Type* compileIndexes(Type* arrayType);
 
-int compile(char *fileName);
+int compile(char* fileName);
 
 #endif

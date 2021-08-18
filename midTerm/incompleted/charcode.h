@@ -1,4 +1,4 @@
-/* 
+/*
  * @copyright (c) 2008, Hedspi, Hanoi University of Technology
  * @author Huu-Duc Nguyen
  * @version 1.0
@@ -9,6 +9,7 @@
 
 typedef enum {
   CHAR_SPACE,
+  CHAR_NEWLINE,
   CHAR_LETTER,
   CHAR_DIGIT,
   CHAR_PLUS,
@@ -27,6 +28,7 @@ typedef enum {
   CHAR_DOUBLEQUOTE,
   CHAR_LPAR,
   CHAR_RPAR,
+  CHAR_QUESTION,
   CHAR_UNKNOWN
 } CharCode;
 

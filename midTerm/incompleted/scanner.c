@@ -4,17 +4,16 @@
  * @version 1.0
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
 
-#include "reader.h"
 #include "charcode.h"
-#include "token.h"
 #include "error.h"
+#include "reader.h"
 #include "scanner.h"
-
+#include "token.h"
 
 extern int lineNo;
 extern int colNo;
@@ -25,7 +24,8 @@ extern CharCode charCodes[];
 /***************************************************************/
 
 void skipBlank() {
-  while ((currentChar != EOF) && (charCodes[currentChar] == CHAR_SPACE))
+  while ((currentChar != EOF) && (charCodes[currentChar] == CHAR_SPACE ||
+                                  charCodes[currentChar] == CHAR_NEWLINE))
     readChar();
 }
 
@@ -33,32 +33,86 @@ void skipComment() {
   int state = 0;
   while ((currentChar != EOF) && (state < 2)) {
     switch (charCodes[currentChar]) {
-    case CHAR_TIMES:
-      state = 1;
-      break;
-    case CHAR_RPAR:
-      if (state == 1) state = 2;
-      else state = 0;
-      break;
-    default:
-      state = 0;
+      case CHAR_TIMES:
+        state = 1;
+        break;
+      case CHAR_RPAR:
+        if (state == 1)
+          state = 2;
+        else
+          state = 0;
+        break;
+      default:
+        state = 0;
     }
     readChar();
   }
-  if (state != 2) 
+  if (state != 2)
     error(ERR_END_OF_COMMENT, lineNo, colNo);
 }
 
+// final term
+// thêm cách comment của C vào KPL
+// coment của C:
+// - // comment trên 1 dòng
+// - /* comment trên n dòng */
+// chia làm 5 state
+void skipCommentLikeC() {
+  // state 0: đã nhận được / đầu tiên, chờ * hoặc / để tiến lên các state khác
+  int state = 0;
+  // state 1: nhận được / tức đây là //: comment trên cùng 1 dòng
+  if (charCodes[currentChar] == CHAR_SLASH) {
+    state = 1;
+  
+  }
+  // state 2: nhận được /*: comment trên n dòng 
+  else if (charCodes[currentChar] == CHAR_TIMES) {
+    state = 2;
+  }
+
+  // comment trên cùng một dòng sẽ kết thúc khi gặp kí tự xuống dòng
+  while ((currentChar != EOF) && (state == 1)) {
+    readChar();
+    // Nếu gặp kí tự xuống dòng chuyển sang state 4
+    if (charCodes[currentChar] == CHAR_NEWLINE) {
+      state = 4;
+    }
+  }
+  // comment trên n dòng sẽ kết thúc khi gặp */
+  while ((currentChar != EOF) && (state == 2 || state == 3)) {
+    readChar();
+    if (charCodes[currentChar] == CHAR_TIMES) {
+      // state 3: đã gặp * và đang chờ / để tạo thành */
+      state = 3;
+    } 
+    // Nếu gặp / mà trước đó có * đã được */ 
+    // chuyển sang state 4
+    else if (charCodes[currentChar] == CHAR_SLASH && state == 3) {
+      state = 4;
+    // Nếu gặp các kí tự khác tức là vẫn đang trong đoạn comment chuyển state 2
+    } else {
+      state = 2;
+    }
+  }
+
+  // Nếu kết thúc mà state khác 4 tức là chưa kết thúc comment
+  // comment bị lỗi
+  if (state != 4) {
+    error(ERR_END_OF_COMMENT, lineNo, colNo);
+  }
+  readChar();
+}
 Token* readIdentKeyword(void) {
-  Token *token = makeToken(TK_NONE, lineNo, colNo);
+  Token* token = makeToken(TK_NONE, lineNo, colNo);
   int count = 1;
 
   token->string[0] = toupper((char)currentChar);
   readChar();
 
-  while ((currentChar != EOF) && 
-	 ((charCodes[currentChar] == CHAR_LETTER) || (charCodes[currentChar] == CHAR_DIGIT))) {
-    if (count <= MAX_IDENT_LEN) token->string[count++] = toupper((char)currentChar);
+  while ((currentChar != EOF) && ((charCodes[currentChar] == CHAR_LETTER) ||
+                                  (charCodes[currentChar] == CHAR_DIGIT))) {
+    if (count <= MAX_IDENT_LEN)
+      token->string[count++] = toupper((char)currentChar);
     readChar();
   }
 
@@ -77,14 +131,16 @@ Token* readIdentKeyword(void) {
 }
 
 Token* readNumber(void) {
-  Token *token = makeToken(TK_NUMBER, lineNo, colNo);
+  Token* token = makeToken(TK_NUMBER, lineNo, colNo);
   int count = 0;
   int checkDot = 0;
 
-  while ((currentChar != EOF) && 
-  (charCodes[currentChar] == CHAR_DIGIT || charCodes[currentChar] == CHAR_PERIOD)) {
-    if (charCodes[currentChar] == CHAR_PERIOD && checkDot == 1) break;
-    if (charCodes[currentChar] == CHAR_PERIOD) checkDot = 1;
+  while ((currentChar != EOF) && (charCodes[currentChar] == CHAR_DIGIT ||
+                                  charCodes[currentChar] == CHAR_PERIOD)) {
+    if (charCodes[currentChar] == CHAR_PERIOD && checkDot == 1)
+      break;
+    if (charCodes[currentChar] == CHAR_PERIOD)
+      checkDot = 1;
 
     token->string[count++] = (char)currentChar;
     readChar();
@@ -97,17 +153,18 @@ Token* readNumber(void) {
 
   token->string[count] = '\0';
 
-  if (!checkDot) token->value = atoi(token->string);
+  if (!checkDot)
+    token->value = atoi(token->string);
   else {
     token->value = atof(token->string);
     token->tokenType = TK_DOUBLE;
   }
-  
+
   return token;
 }
 
 Token* readConstChar(void) {
-  Token *token = makeToken(TK_CHAR, lineNo, colNo);
+  Token* token = makeToken(TK_CHAR, lineNo, colNo);
 
   readChar();
   if (currentChar == EOF) {
@@ -115,7 +172,7 @@ Token* readConstChar(void) {
     error(ERR_INVALID_CONSTANT_CHAR, token->lineNo, token->colNo);
     return token;
   }
-    
+
   token->string[0] = currentChar;
   token->string[1] = '\0';
 
@@ -137,7 +194,7 @@ Token* readConstChar(void) {
 }
 
 Token* readConstString(void) {
-  char* ident = (char*) calloc(MAX_STRING_LEN + 1, sizeof(char));
+  char* ident = (char*)calloc(MAX_STRING_LEN + 1, sizeof(char));
 
   int i = 0;
   readChar();
@@ -147,143 +204,181 @@ Token* readConstString(void) {
     if (currentChar == EOF) {
       error(ERR_INVALID_CONSTANT_STRING, lineNo, colNo);
     }
-    if (charCodes[currentChar] == CHAR_DOUBLEQUOTE) break;
+    if (charCodes[currentChar] == CHAR_DOUBLEQUOTE)
+      break;
     if (i == MAX_STRING_LEN) {
       error(ERR_INVALID_CONSTANT_STRING, lineNo, colNo);
     }
 
-    ident[i] = (char) currentChar;
+    ident[i] = (char)currentChar;
     i++;
     readChar();
   } while (1);
-  
+
   ident[i] = '\0';
   strcpy(result->string, ident);
-  if (ident != NULL) free(ident);
+  if (ident != NULL)
+    free(ident);
   readChar();
   return result;
-
 }
 
 Token* getToken(void) {
-  Token *token;
+  Token* token;
   int ln, cn;
 
-  if (currentChar == EOF) 
+  if (currentChar == EOF)
     return makeToken(TK_EOF, lineNo, colNo);
 
   switch (charCodes[currentChar]) {
-  case CHAR_SPACE: skipBlank(); return getToken();
-  case CHAR_LETTER: return readIdentKeyword();
-  case CHAR_DIGIT: return readNumber();
-  case CHAR_PLUS: 
-    token = makeToken(SB_PLUS, lineNo, colNo);
-    readChar(); 
-    return token;
-  case CHAR_MINUS:
-    token = makeToken(SB_MINUS, lineNo, colNo);
-    readChar(); 
-    return token;
-  case CHAR_TIMES:
-    token = makeToken(SB_TIMES, lineNo, colNo);
-    readChar(); 
-    return token;
-  case CHAR_SLASH:
-    token = makeToken(SB_SLASH, lineNo, colNo);
-    readChar(); 
-    return token;
-  case CHAR_LT:
-    ln = lineNo;
-    cn = colNo;
-    readChar();
-    if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_EQ)) {
-      readChar();
-      return makeToken(SB_LE, ln, cn);
-    } else return makeToken(SB_LT, ln, cn);
-  case CHAR_GT:
-    ln = lineNo;
-    cn = colNo;
-    readChar();
-    if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_EQ)) {
-      readChar();
-      return makeToken(SB_GE, ln, cn);
-    } else return makeToken(SB_GT, ln, cn);
-  case CHAR_EQ: 
-    token = makeToken(SB_EQ, lineNo, colNo);
-    readChar(); 
-    return token;
-  case CHAR_EXCLAIMATION:
-    ln = lineNo;
-    cn = colNo;
-    readChar();
-    if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_EQ)) {
-      readChar();
-      return makeToken(SB_NEQ, ln, cn);
-    } else {
-      token = makeToken(TK_NONE, ln, cn);
-      error(ERR_INVALID_SYMBOL, ln, cn);
-      return token;
-    }
-  case CHAR_COMMA:
-    token = makeToken(SB_COMMA, lineNo, colNo);
-    readChar(); 
-    return token;
-  case CHAR_PERIOD:
-    ln = lineNo;
-    cn = colNo;
-    readChar();
-    if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_RPAR)) {
-      readChar();
-      return makeToken(SB_RSEL, ln, cn);
-    } else return makeToken(SB_PERIOD, ln, cn);
-  case CHAR_SEMICOLON:
-    token = makeToken(SB_SEMICOLON, lineNo, colNo);
-    readChar(); 
-    return token;
-  case CHAR_COLON:
-    ln = lineNo;
-    cn = colNo;
-    readChar();
-    if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_EQ)) {
-      readChar();
-      return makeToken(SB_ASSIGN, ln, cn);
-    } else return makeToken(SB_COLON, ln, cn);
-  case CHAR_SINGLEQUOTE: return readConstChar();
-  case CHAR_DOUBLEQUOTE: return readConstString();
-  case CHAR_LPAR:
-    ln = lineNo;
-    cn = colNo;
-    readChar();
-
-    if (currentChar == EOF) 
-      return makeToken(SB_LPAR, ln, cn);
-
-    switch (charCodes[currentChar]) {
-    case CHAR_PERIOD:
-      readChar();
-      return makeToken(SB_LSEL, ln, cn);
-    case CHAR_TIMES:
-      readChar();
-      skipComment();
+    case CHAR_SPACE:
+    case CHAR_NEWLINE:
+      skipBlank();
       return getToken();
+    case CHAR_LETTER:
+      return readIdentKeyword();
+    case CHAR_DIGIT:
+      return readNumber();
+    case CHAR_PLUS:
+      token = makeToken(SB_PLUS, lineNo, colNo);
+      readChar();
+      return token;
+    case CHAR_MINUS:
+      token = makeToken(SB_MINUS, lineNo, colNo);
+      readChar();
+      return token;
+    case CHAR_TIMES:
+      token = makeToken(SB_TIMES, lineNo, colNo);
+      readChar();
+      return token;
+    case CHAR_SLASH:
+      ln = lineNo;
+      cn = colNo;
+      readChar();
+      // final term
+      // Nếu char tiếp theo là / hoặc * tức đây là comment trong c
+      if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_SLASH ||
+                                   charCodes[currentChar] == CHAR_TIMES)) {
+        skipCommentLikeC();
+        return getToken();
+      } 
+      // Nếu không trả về SB_SLASH
+      else
+        return makeToken(SB_SLASH, ln, cn);
+    case CHAR_LT:
+      ln = lineNo;
+      cn = colNo;
+      readChar();
+      if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_EQ)) {
+        readChar();
+        return makeToken(SB_LE, ln, cn);
+      } else
+        return makeToken(SB_LT, ln, cn);
+    case CHAR_GT:
+      ln = lineNo;
+      cn = colNo;
+      readChar();
+      if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_EQ)) {
+        readChar();
+        return makeToken(SB_GE, ln, cn);
+      } else
+        return makeToken(SB_GT, ln, cn);
+    case CHAR_EQ:
+      token = makeToken(SB_EQ, lineNo, colNo);
+      readChar();
+      return token;
+    case CHAR_EXCLAIMATION:
+      ln = lineNo;
+      cn = colNo;
+      readChar();
+      if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_EQ)) {
+        readChar();
+        return makeToken(SB_NEQ, ln, cn);
+      } else {
+        token = makeToken(TK_NONE, ln, cn);
+        error(ERR_INVALID_SYMBOL, ln, cn);
+        return token;
+      }
+    case CHAR_COMMA:
+      token = makeToken(SB_COMMA, lineNo, colNo);
+      readChar();
+      return token;
+    case CHAR_PERIOD:
+      ln = lineNo;
+      cn = colNo;
+      readChar();
+      if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_RPAR)) {
+        readChar();
+        return makeToken(SB_RSEL, ln, cn);
+      } else
+        return makeToken(SB_PERIOD, ln, cn);
+    case CHAR_SEMICOLON:
+      token = makeToken(SB_SEMICOLON, lineNo, colNo);
+      readChar();
+      return token;
+    case CHAR_COLON:
+      ln = lineNo;
+      cn = colNo;
+      readChar();
+      // final term
+      // Nếu gặp = tức là phép gán thường :=
+      // trả về token :=
+      if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_EQ)) {
+        readChar();
+        return makeToken(SB_ASSIGN, ln, cn);
+      } 
+      // Nếu gặp : tức là phép gán if, else
+      // trả về token ::=
+      else if ((currentChar != EOF) &&
+                 (charCodes[currentChar] == CHAR_COLON)) {
+        readChar();
+        readChar();
+        return makeToken(SB_ASSIGN_2, ln, cn);
+      // Trường hợp còn lại chỉ trả về SB_COLON
+      } else
+        return makeToken(SB_COLON, ln, cn);
+    case CHAR_SINGLEQUOTE:
+      return readConstChar();
+    case CHAR_DOUBLEQUOTE:
+      return readConstString();
+    case CHAR_LPAR:
+      ln = lineNo;
+      cn = colNo;
+      readChar();
+
+      if (currentChar == EOF)
+        return makeToken(SB_LPAR, ln, cn);
+
+      switch (charCodes[currentChar]) {
+        case CHAR_PERIOD:
+          readChar();
+          return makeToken(SB_LSEL, ln, cn);
+        case CHAR_TIMES:
+          readChar();
+          skipComment();
+          return getToken();
+        default:
+          return makeToken(SB_LPAR, ln, cn);
+      }
+    case CHAR_RPAR:
+      token = makeToken(SB_RPAR, lineNo, colNo);
+      readChar();
+      return token;
+    case CHAR_QUESTION:
+      token = makeToken(SB_QUESTION, lineNo, colNo);
+      readChar();
+      return token;
     default:
-      return makeToken(SB_LPAR, ln, cn);
-    }
-  case CHAR_RPAR:
-    token = makeToken(SB_RPAR, lineNo, colNo);
-    readChar(); 
-    return token;
-  default:
-    token = makeToken(TK_NONE, lineNo, colNo);
-    error(ERR_INVALID_SYMBOL, lineNo, colNo);
-    readChar(); 
-    return token;
+      token = makeToken(TK_NONE, lineNo, colNo);
+      error(ERR_INVALID_SYMBOL, lineNo, colNo);
+      readChar();
+      return token;
   }
 }
 
 Token* getValidToken(void) {
   printf("");
-  Token *token = getToken();
+  Token* token = getToken();
   while (token->tokenType == TK_NONE) {
     free(token);
     token = getToken();
@@ -291,64 +386,169 @@ Token* getValidToken(void) {
   return token;
 }
 
-
 /******************************************************************/
 
-void printToken(Token *token) {
-
+void printToken(Token* token) {
   printf("%d-%d:", token->lineNo, token->colNo);
 
   switch (token->tokenType) {
-  case TK_NONE: printf("TK_NONE\n"); break;
-  case TK_IDENT: printf("TK_IDENT(%s)\n", token->string); break;
-  case TK_NUMBER: printf("TK_NUMBER(%s)\n", token->string); break;
-  case TK_CHAR: printf("TK_CHAR(\'%s\')\n", token->string); break;
-  case TK_EOF: printf("TK_EOF\n"); break;
-  case TK_DOUBLE: printf("TK_DOUBLE\n"); break;
-  case TK_STRING: printf("TK_STRING\n"); break;
+    case TK_NONE:
+      printf("TK_NONE\n");
+      break;
+    case TK_IDENT:
+      printf("TK_IDENT(%s)\n", token->string);
+      break;
+    case TK_NUMBER:
+      printf("TK_NUMBER(%s)\n", token->string);
+      break;
+    case TK_CHAR:
+      printf("TK_CHAR(\'%s\')\n", token->string);
+      break;
+    case TK_EOF:
+      printf("TK_EOF\n");
+      break;
+    case TK_DOUBLE:
+      printf("TK_DOUBLE\n");
+      break;
+    case TK_STRING:
+      printf("TK_STRING\n");
+      break;
 
-  case KW_PROGRAM: printf("KW_PROGRAM\n"); break;
-  case KW_CONST: printf("KW_CONST\n"); break;
-  case KW_TYPE: printf("KW_TYPE\n"); break;
-  case KW_VAR: printf("KW_VAR\n"); break;
-  case KW_INTEGER: printf("KW_INTEGER\n"); break;
-  case KW_CHAR: printf("KW_CHAR\n"); break;
-  case KW_ARRAY: printf("KW_ARRAY\n"); break;
-  case KW_OF: printf("KW_OF\n"); break;
-  case KW_FUNCTION: printf("KW_FUNCTION\n"); break;
-  case KW_PROCEDURE: printf("KW_PROCEDURE\n"); break;
-  case KW_BEGIN: printf("KW_BEGIN\n"); break;
-  case KW_END: printf("KW_END\n"); break;
-  case KW_CALL: printf("KW_CALL\n"); break;
-  case KW_IF: printf("KW_IF\n"); break;
-  case KW_THEN: printf("KW_THEN\n"); break;
-  case KW_ELSE: printf("KW_ELSE\n"); break;
-  case KW_WHILE: printf("KW_WHILE\n"); break;
-  case KW_DO: printf("KW_DO\n"); break;
-  case KW_FOR: printf("KW_FOR\n"); break;
-  case KW_TO: printf("KW_TO\n"); break;
-  case KW_STRING: printf("KW_STRING\n"); break;
-  case KW_DOUBLE: printf("KW_DOUBLE\n"); break;
+    case KW_PROGRAM:
+      printf("KW_PROGRAM\n");
+      break;
+    case KW_CONST:
+      printf("KW_CONST\n");
+      break;
+    case KW_TYPE:
+      printf("KW_TYPE\n");
+      break;
+    case KW_VAR:
+      printf("KW_VAR\n");
+      break;
+    case KW_INTEGER:
+      printf("KW_INTEGER\n");
+      break;
+    case KW_CHAR:
+      printf("KW_CHAR\n");
+      break;
+    case KW_ARRAY:
+      printf("KW_ARRAY\n");
+      break;
+    case KW_OF:
+      printf("KW_OF\n");
+      break;
+    case KW_FUNCTION:
+      printf("KW_FUNCTION\n");
+      break;
+    case KW_PROCEDURE:
+      printf("KW_PROCEDURE\n");
+      break;
+    case KW_BEGIN:
+      printf("KW_BEGIN\n");
+      break;
+    case KW_END:
+      printf("KW_END\n");
+      break;
+    case KW_CALL:
+      printf("KW_CALL\n");
+      break;
+    case KW_IF:
+      printf("KW_IF\n");
+      break;
+    case KW_THEN:
+      printf("KW_THEN\n");
+      break;
+    case KW_ELSE:
+      printf("KW_ELSE\n");
+      break;
+    case KW_WHILE:
+      printf("KW_WHILE\n");
+      break;
+    case KW_DO:
+      printf("KW_DO\n");
+      break;
+    case KW_FOR:
+      printf("KW_FOR\n");
+      break;
+    case KW_TO:
+      printf("KW_TO\n");
+      break;
+    case KW_STRING:
+      printf("KW_STRING\n");
+      break;
+    case KW_DOUBLE:
+      printf("KW_DOUBLE\n");
+      break;
+    case KW_RETURN:
+      printf("KW_RETURN\n");
+    case KW_REPEAT:
+      printf("KW_REPEAT\n");
+    case KW_UNTIL:
+      printf("KW_UNTIL\n");
 
-  case SB_SEMICOLON: printf("SB_SEMICOLON\n"); break;
-  case SB_COLON: printf("SB_COLON\n"); break;
-  case SB_PERIOD: printf("SB_PERIOD\n"); break;
-  case SB_COMMA: printf("SB_COMMA\n"); break;
-  case SB_ASSIGN: printf("SB_ASSIGN\n"); break;
-  case SB_EQ: printf("SB_EQ\n"); break;
-  case SB_NEQ: printf("SB_NEQ\n"); break;
-  case SB_LT: printf("SB_LT\n"); break;
-  case SB_LE: printf("SB_LE\n"); break;
-  case SB_GT: printf("SB_GT\n"); break;
-  case SB_GE: printf("SB_GE\n"); break;
-  case SB_PLUS: printf("SB_PLUS\n"); break;
-  case SB_MINUS: printf("SB_MINUS\n"); break;
-  case SB_TIMES: printf("SB_TIMES\n"); break;
-  case SB_SLASH: printf("SB_SLASH\n"); break;
-  case SB_LPAR: printf("SB_LPAR\n"); break;
-  case SB_RPAR: printf("SB_RPAR\n"); break;
-  case SB_LSEL: printf("SB_LSEL\n"); break;
-  case SB_RSEL: printf("SB_RSEL\n"); break;
+    case SB_SEMICOLON:
+      printf("SB_SEMICOLON\n");
+      break;
+    case SB_COLON:
+      printf("SB_COLON\n");
+      break;
+    case SB_PERIOD:
+      printf("SB_PERIOD\n");
+      break;
+    case SB_COMMA:
+      printf("SB_COMMA\n");
+      break;
+    case SB_ASSIGN:
+      printf("SB_ASSIGN\n");
+      break;
+    case SB_ASSIGN_2:
+      printf("SB_ASSIGN_2\n");
+      break;
+    case SB_EQ:
+      printf("SB_EQ\n");
+      break;
+    case SB_NEQ:
+      printf("SB_NEQ\n");
+      break;
+    case SB_LT:
+      printf("SB_LT\n");
+      break;
+    case SB_LE:
+      printf("SB_LE\n");
+      break;
+    case SB_GT:
+      printf("SB_GT\n");
+      break;
+    case SB_GE:
+      printf("SB_GE\n");
+      break;
+    case SB_PLUS:
+      printf("SB_PLUS\n");
+      break;
+    case SB_MINUS:
+      printf("SB_MINUS\n");
+      break;
+    case SB_TIMES:
+      printf("SB_TIMES\n");
+      break;
+    case SB_SLASH:
+      printf("SB_SLASH\n");
+      break;
+    case SB_LPAR:
+      printf("SB_LPAR\n");
+      break;
+    case SB_RPAR:
+      printf("SB_RPAR\n");
+      break;
+    case SB_LSEL:
+      printf("SB_LSEL\n");
+      break;
+    case SB_RSEL:
+      printf("SB_RSEL\n");
+      break;
+    case SB_QUESTION:
+      printf("SB_QUESTION\n");
+      break;
   }
 }
-
