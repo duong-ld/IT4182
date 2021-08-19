@@ -63,9 +63,9 @@ void skipCommentLikeC() {
   // state 1: nhận được / tức đây là //: comment trên cùng 1 dòng
   if (charCodes[currentChar] == CHAR_SLASH) {
     state = 1;
-  
+
   }
-  // state 2: nhận được /*: comment trên n dòng 
+  // state 2: nhận được /*: comment trên n dòng
   else if (charCodes[currentChar] == CHAR_TIMES) {
     state = 2;
   }
@@ -84,12 +84,13 @@ void skipCommentLikeC() {
     if (charCodes[currentChar] == CHAR_TIMES) {
       // state 3: đã gặp * và đang chờ / để tạo thành */
       state = 3;
-    } 
-    // Nếu gặp / mà trước đó có * đã được */ 
+    }
+    // Nếu gặp / mà trước đó có * đã được */
     // chuyển sang state 4
     else if (charCodes[currentChar] == CHAR_SLASH && state == 3) {
       state = 4;
-    // Nếu gặp các kí tự khác tức là vẫn đang trong đoạn comment chuyển state 2
+      // Nếu gặp các kí tự khác tức là vẫn đang trong đoạn comment chuyển state
+      // 2
     } else {
       state = 2;
     }
@@ -256,12 +257,13 @@ Token* getToken(void) {
       cn = colNo;
       readChar();
       // final term
+      // gặp /
       // Nếu char tiếp theo là / hoặc * tức đây là comment trong c
       if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_SLASH ||
                                    charCodes[currentChar] == CHAR_TIMES)) {
         skipCommentLikeC();
         return getToken();
-      } 
+      }
       // Nếu không trả về SB_SLASH
       else
         return makeToken(SB_SLASH, ln, cn);
@@ -299,6 +301,12 @@ Token* getToken(void) {
         error(ERR_INVALID_SYMBOL, ln, cn);
         return token;
       }
+    // final term
+    // dấu % trong phép chia module
+    case CHAR_MOD:
+      token = makeToken(SB_MOD, lineNo, colNo);
+      readChar();
+      return token;
     case CHAR_COMMA:
       token = makeToken(SB_COMMA, lineNo, colNo);
       readChar();
@@ -321,20 +329,20 @@ Token* getToken(void) {
       cn = colNo;
       readChar();
       // final term
+      // gặp :
       // Nếu gặp = tức là phép gán thường :=
       // trả về token :=
       if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_EQ)) {
         readChar();
         return makeToken(SB_ASSIGN, ln, cn);
-      } 
+      }
       // Nếu gặp : tức là phép gán if, else
       // trả về token ::=
-      else if ((currentChar != EOF) &&
-                 (charCodes[currentChar] == CHAR_COLON)) {
+      else if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_COLON)) {
         readChar();
         readChar();
         return makeToken(SB_ASSIGN_2, ln, cn);
-      // Trường hợp còn lại chỉ trả về SB_COLON
+        // Trường hợp còn lại chỉ trả về SB_COLON
       } else
         return makeToken(SB_COLON, ln, cn);
     case CHAR_SINGLEQUOTE:
@@ -495,6 +503,9 @@ void printToken(Token* token) {
       break;
     case SB_PERIOD:
       printf("SB_PERIOD\n");
+      break;
+    case SB_MOD:
+      printf("SB_MOD\n");
       break;
     case SB_COMMA:
       printf("SB_COMMA\n");

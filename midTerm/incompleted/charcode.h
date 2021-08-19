@@ -28,7 +28,8 @@ typedef enum {
   CHAR_DOUBLEQUOTE,
   CHAR_LPAR,
   CHAR_RPAR,
-  CHAR_QUESTION,
+  CHAR_QUESTION,  // final term: phép gán 3 ngôi: ?
+  CHAR_MOD,       // final term: phép toán module: 5 % 3 = 2
   CHAR_UNKNOWN
 } CharCode;
 

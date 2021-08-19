@@ -163,6 +163,8 @@ char* tokenToString(TokenType tokenType) {
       return "\'.)\'";
     case SB_QUESTION:
       return "\'?\'";
+    case SB_MOD:
+      return "\'%\'";
     default:
       return "";
   }

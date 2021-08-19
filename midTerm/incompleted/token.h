@@ -76,8 +76,10 @@ typedef enum {
   // dấu hỏi chấm trong phép gán 3 ngôi
   // x = a > b ? c : d
   SB_QUESTION,
+  // dấu % trong phép chia module
+  SB_MOD,
   // phép gán có if, else
-  // ::=
+  // dấu ::=
   SB_ASSIGN_2
 } TokenType;
 

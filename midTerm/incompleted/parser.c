@@ -452,10 +452,29 @@ void compileStatement(void) {
     case KW_REPEAT:
       compileRepeatSt();
       break;
-      // EmptySt needs to check FOLLOW tokens
+    // Trong trường hợp statement rỗng
+    // Token tiếp theo sẽ là follow của statement
+    // Ví dụ như:
+    // if x > 1 then else x := 1
+    // Sau <then> đáng lẽ phải là 1 statement nhưng statement này rỗng
+    // nên sau <then> sẽ là <else>
+    // theo đúng thứ tự compileIfSt()
+    // eat(IF
+    // compileCondition()
+    // eat(THEN)
+    // compileStatement()
+    // eat(ELSE)
+    // compileStatement()
+    // tuy nhiên ở đây sau khi eat <THEN> vào compileStatement() sẽ gặp <ELSE>
+    // Vậy hàm compileStatement() phải biết là nếu gặp <ELSE>
+    // => statement rỗng và cho pass luôn.
+    // Giả sử hàm compileStatement() này không có đoạn check follow sau đây
+    // thì với trường hợp gặp <ELSE> như trên sẽ vào default và báo lỗi
+    // Đó là lý do phải check folow của những thứ có thể rỗng
     case SB_SEMICOLON:
     case KW_END:
     case KW_ELSE:
+    case KW_UNTIL:
       break;
       // Error occurs
     default:
@@ -909,6 +928,12 @@ void compileArguments(ObjectNode* paramList) {
       // Check FOLLOW set
     case SB_TIMES:
     case SB_SLASH:
+    // final term
+    // Thêm phép toán module
+    // Vì module có mức ưu tiên như phép nhân và phép chia
+    // ctrl + f và tìm kiếm SB_SLASH (phép chia) hoặc SB_TIMES (phép nhân)
+    // và điền SB_MOD tương ứng vào là được 
+    case SB_MOD:
     case SB_PLUS:
     case SB_MINUS:
     case KW_TO:
@@ -1096,6 +1121,20 @@ Type* compileTerm2(void) {
       break;
     case SB_SLASH:
       eat(SB_SLASH);
+      type1 = compileFactor();
+      checkNumberType(type1);
+
+      type2 = compileTerm2();
+      if (type2 != NULL) {
+        return autoUpcasting(type1, type2);
+      }
+      return type1;
+      break;
+    // final term
+    // phép toán module tương đương với phép nhân chia
+    // copy đoạn trên xuống rồi sửa SB_SLASH thành SB_MOD
+    case SB_MOD:
+      eat(SB_MOD);
       type1 = compileFactor();
       checkNumberType(type1);
 
