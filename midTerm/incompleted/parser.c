@@ -452,6 +452,19 @@ void compileStatement(void) {
     case KW_REPEAT:
       compileRepeatSt();
       break;
+    // thêm lệnh switch case
+    // switch <expression>
+    // BEGIN
+    //  case <constant> : <statements>
+    //  ...
+    //  default : <statement>
+    // END;
+    case KW_SWITCH:
+      compileSwitchSt();
+      break;
+    case KW_BREAK:
+      compileBreakSt();
+      break;
     // Trong trường hợp statement rỗng
     // Token tiếp theo sẽ là follow của statement
     // Ví dụ như:
@@ -475,6 +488,8 @@ void compileStatement(void) {
     case KW_END:
     case KW_ELSE:
     case KW_UNTIL:
+    case KW_CASE:
+    case KW_DEFAULT:
       break;
       // Error occurs
     default:
@@ -523,7 +538,7 @@ int compileLeftAssign(Type** LAssign, int top) {
   // Ví dụ:
   // x := 1; x là biến nên x được nằm bên trái phép gán
   // 1 := 2; 1 là số nên 1 không được nằm bên trái
-  // Kiểu của left value sẽ được lưu vào top
+  // Kiểu của left value sẽ được lưu vào LAssign[top]
   // hiện tại top = 0
   // với phép gán nhiều biến sẽ gọi đệ quy hàm này với top tăng dần
   // Ví dụ như:
@@ -554,12 +569,12 @@ int compileLeftAssign(Type** LAssign, int top) {
       return top + 1;
       break;
     default:
+      DISABLE_RETURN_WARNING
       // Nếu không gặp dấu phẩy và cũng không gặp dấu := hoặc ::=
       // phép gán này sai cú pháp
       error(ERR_INVALID_STATEMENT, currentToken->lineNo, currentToken->colNo);
       break;
   }
-  return -1;
 }
 
 // final term
@@ -633,75 +648,73 @@ int compileRightAssign(Type** RAssign, int top) {
   }
 
   // Nếu gặp toán tử so sánh trong vế phải sẽ break ra đoạn này
-  // do gán bằng toán tử 3 ngôi nên
-  //  + vế trái chỉ có 1 biến
-  //  + vế phải chỉ có 1 phép toán 3 ngôi
-  // Kiểm tra top hiện tại có bằng 0 hay không
-  // Nếu top khác 0 tức là phép so sánh sai cú pháp
-  // ví dụ: x = x1, a > b ? c : d;
-  // ở vế phải sau khi compile xong x1 gặp dấu phẩy
-  // => đệ quy lại chính hàm này với top tăng lên 1
-  // khi gặp toán tử 3 ngôi, top lúc này bằng 1 nên phép gán này là sai cú pháp
-  // Nhìn thì cũng thấy phép gán này là sai cú pháp
-  // x sẽ nhận giá trị của x1 hay nhận giá trị của c hay d
-  if (top != 0) {
-    error(ERR_INVALID_STATEMENT, lookAhead->lineNo, lookAhead->colNo);
-    return -1;
-    // Nếu top = 0 thì tiếp tục
-    // phép gán toán tử 3 ngôi:
-    // x = <expression1> <dấu so sánh> <expression2> ? <expression3> :
-    // <expression4> lúc này RAssign[0] đang chứa type của expression1 (câu lệnh
-    // đầu tiên của function này)
+
+  // compile <expression2> và lưu vào RType
+  Type* RType = compileExpression();
+
+  // Rtype và RAssign[top] đang chứa type của 2 vế của phép so sánh
+  // RAssign[top] chứa type của vế trái phép so sánh (câu lệnh đầu tiên)
+  // kiểm tra điều kiện type 2 vế của phép so sánh
+  // hoặc cùng là số (int, double)
+  // hoặc cùng là 1 kiểu nào đó
+  if (RAssign[top]->typeClass == TP_INT ||
+      RAssign[top]->typeClass == TP_DOUBLE) {
+    checkNumberType(RType);
   } else {
-    // compile <expression2> và lưu vào RType
-    Type* RType = compileExpression();
-
-    // Rtype và RAssign[0] đang chứa type của 2 vế của phép so sánh
-    // kiểm tra điều kiện type 2 vế của phép so sánh
-    // hoặc cùng là số (int, double)
-    // hoặc cùng là 1 kiểu nào đó
-    if (RAssign[0]->typeClass == TP_INT || RAssign[0]->typeClass == TP_DOUBLE) {
-      checkNumberType(RType);
-    } else {
-      checkTypeEquality(RType, RAssign[0]);
-    }
-
-    eat(SB_QUESTION);  // sau phép so sánh là dấu ?
-
-    // compile <expression3> và lưu vào LType
-    // expression3 là giá trị sẽ được gán vào x nếu điều kiện đúng
-    Type* LType = compileExpression();
-
-    eat(SB_COLON);  // sau expression3 là dấu :
-
-    // compile <expression4> và lưu vào RType
-    // expression4 là giá trị sẽ được gán vào x nếu điều kiện sai
-    RType = compileExpression();
-
-    // RAssign[0] là kiểu của vế trái
-    // so sánh RAssign[0] với kiểu của x để kiểm tra 2 vế của phép gán có-
-    // -hợp lệ không
-    // ví dụ: x = a > b ? 1: 2;
-    // tức là x sẽ bằng 1 nếu điều kiện đúng
-    // x bằng 2 nếu điều kiện sai
-    // vậy phải kiếm tra x có là số nguyên hay không
-    // tức là RAssign[0] sẽ phải mang kiểu int
-    // để so sánh với LAssign[0] mang kiểu của x
-    if (LType->typeClass == TP_INT || LType->typeClass == TP_DOUBLE) {
-      // Nếu LType là kiểu số, RAssign[0] sẽ mang kiểu số
-      // Nếu LType hoặc RType mang giá trị double thì RAssign[0] sẽ là double
-      // Nếu cả 2 là int thì RAssign[0] sẽ là int
-      RAssign[0] = autoUpcasting(LType, RType);
-      return 1;
-    } else {
-      // Nếu LType và RType là kiểu không phải kiểu số
-      // thì type của LType và RType sẽ phải giống nhau và giống RAssign[0]
-      checkTypeEquality(LType, RType);
-      RAssign[0] = duplicateType(RType);
-      return 1;
-    }
+    checkTypeEquality(RType, RAssign[top]);
   }
-  //
+
+  eat(SB_QUESTION);  // sau phép so sánh là dấu ?
+
+  // phép gán toán tử 3 ngôi:
+  // x := a <op> b ? c : d
+  // sau khi eat SB_QUESTION thì sẽ đến đoạn compile c và d
+  // type của c và d sẽ gán trực tiếp vào
+  // RAssign[top] để so sánh với LAssign[top]
+
+  // Compile <expression3> và lưu vào LType
+  // expression3 là giá trị sẽ được gán vào x nếu điều kiện đúng
+  // tức là c ở trong ví dụ trên
+  Type* LType = compileExpression();
+
+  eat(SB_COLON);  // sau expression3 là dấu :
+
+  // compile <expression4> và lưu vào RType
+  // expression4 là giá trị sẽ được gán vào x nếu điều kiện sai
+  // tức là d ở trong ví dụ trên
+  RType = compileExpression();
+
+  // RAssign[top] là kiểu của vế trái
+  // so sánh RAssign[top] với kiểu của x để kiểm tra 2 vế của phép gán có-
+  // -hợp lệ không
+  // ví dụ: x = a > b ? 1: 2;
+  // tức là x sẽ bằng 1 nếu điều kiện đúng
+  // x bằng 2 nếu điều kiện sai
+  // vậy phải kiếm tra x có là số nguyên hay không
+  // tức là RAssign[top] sẽ phải mang kiểu int
+  // để so sánh với LAssign[top] mang kiểu của x
+  if (LType->typeClass == TP_INT || LType->typeClass == TP_DOUBLE) {
+    // Nếu LType là kiểu số, RAssign[top] sẽ mang kiểu số
+    // Nếu LType hoặc RType mang giá trị double thì RAssign[top] sẽ là double
+    // Nếu cả 2 là int thì RAssign[top] sẽ là int
+    RAssign[top] = autoUpcasting(LType, RType);
+    ;
+  } else {
+    // Nếu LType và RType là kiểu không phải kiểu số
+    // thì type của LType và RType sẽ phải giống nhau và giống RAssign[top]
+    checkTypeEquality(LType, RType);
+    RAssign[top] = duplicateType(RType);
+  }
+  // đã kiếm tra xong phép gán 3 ngôi
+  // Nếu token tiếp theo là dấu , tức là còn phép gán nhiều biến
+  // Nếu token tiếp theo khác , tức là kết thúc phép gán
+
+  if (lookAhead->tokenType == SB_COMMA) {
+    eat(SB_COMMA);
+    return compileRightAssign(RAssign, top + 1);
+  } else {
+    return top + 1;
+  }
 }
 
 // final term
@@ -848,6 +861,40 @@ void compileRepeatSt(void) {
   compileCondition();
 }
 
+// final term
+// thêm câu lệnh switch case
+// switch <expression>
+// BEGIN
+//  case <constant> : <statements>
+//  case <constant> : <statements>
+//  ...
+//  default : <statement>
+// END
+void compileSwitchSt(void) {
+  eat(KW_SWITCH);
+  compileExpression();
+  eat(KW_BEGIN);
+  while (lookAhead->tokenType == KW_CASE) {
+    eat(KW_CASE);
+    compileConstant();
+    eat(SB_COLON);
+    compileStatements();
+  }
+  if (lookAhead->tokenType == KW_DEFAULT) {
+    eat(KW_DEFAULT);
+    eat(SB_COLON);
+    compileStatement();
+  }
+  eat(KW_END);
+}
+
+// final term
+// compile break
+// do lệnh break nằm bên trong statements nên coi nó như 1 statement
+void compileBreakSt(void) {
+  eat(KW_BREAK);
+}
+
 void compileForSt(void) {
   // TCheck type consistency of FOR's variable
   Object* idex = NULL;
@@ -932,7 +979,7 @@ void compileArguments(ObjectNode* paramList) {
     // Thêm phép toán module
     // Vì module có mức ưu tiên như phép nhân và phép chia
     // ctrl + f và tìm kiếm SB_SLASH (phép chia) hoặc SB_TIMES (phép nhân)
-    // và điền SB_MOD tương ứng vào là được 
+    // và điền SB_MOD tương ứng vào là được
     case SB_MOD:
     case SB_PLUS:
     case SB_MINUS:
@@ -998,6 +1045,34 @@ void compileCondition(void) {
   }
 }
 
+// final term
+// thêm phép cộng cho chuỗi
+// định nghĩa: "hello" + " world" = "hello world"
+// phép cộng trong KPL:
+// các phép cộng trừ trong KPL được xử lý bằng Expression
+// Expression: dấu cộng, trừ ở phía trước phép tính
+//    ví dụ: -1 + 2 + 3 - 4
+//    => dấu - trước số 1 sẽ được xử lý trong expression
+// Expression2: Nhân tử đầu tiên và toàn bộ phép tính còn lại
+//    ví dụ: -1 + 2 + 3 - 4
+//    => expression2 sẽ chia phép tính thành:
+//      phần 1: -1
+//      phần 2: + 2 + 3 - 4
+// Tại sao lại cần chia ra xử lý riêng nhân tử đầu tiên:
+// Vì trong trường hợp không có phép cộng trừ nào thì phần 2 sẽ rỗng
+// và chỉ cần phần 1, lúc này coi như 1 phép gán thông thường
+// Expression3: Phép cộng trừ trong phép tính
+//    ví dụ: -1 + 2 + 3 - 4
+//    => + 2, +3, -4 sẽ được xử lý trong expression3
+// expression3 cũng có thể rỗng
+// để xử lý trường hợp không có phép cộng và không kéo dài phép cộng
+//
+// Để xử lý phép cộng String
+// tức là "hello" + " world"
+// "hello" là nhân tử đầu tiên nên sẽ phải xử lý trong expression2
+// + "world" sẽ phải xử lý trong expression3
+// hàm expression này sẽ giữ nguyên
+
 Type* compileExpression(void) {
   Type* type;
 
@@ -1018,6 +1093,15 @@ Type* compileExpression(void) {
   return type;
 }
 
+// hàm expression2 xử lý nhân tử đầu tiên và toàn bộ phép cộng trừ phía sau
+// expression2 := term expression3
+// term là nhân tử đầu tiên và expression3 là toàn bộ phép cộng trừ
+// Nếu expression3 là rỗng, ko cần quan tâm đến type của term
+// vì coi như đây chỉ là phép gán bình thường
+// x = a;
+// Nếu expression3 khác rỗng
+// ban đầu là sẽ kiểm tra type của term và expression3 có phải là số hay ko
+// bây h cho phép cộng String rồi nên phải kiểm tra thêm trường hợp String nữa
 Type* compileExpression2(void) {
   Type* type1;
   Type* type2;
@@ -1027,7 +1111,12 @@ Type* compileExpression2(void) {
   if (type2 == NULL)
     return type1;
   else {
-    return autoUpcasting(type1, type2);
+    if (type2->typeClass == TP_STRING && type1->typeClass == TP_STRING) {
+      return type2;
+      // hoặc return type 1 cũng được
+    } else {
+      return autoUpcasting(type1, type2);
+    }
   }
 }
 
@@ -1039,11 +1128,23 @@ Type* compileExpression3(void) {
     case SB_PLUS:
       eat(SB_PLUS);
       type1 = compileTerm();
-      checkNumberType(type1);
+      // trước đó là checkNumberType(type1);
+      // bây h sẽ cho phép cả String
+      if (type1 == NULL ||
+          (type1->typeClass != TP_DOUBLE && type1->typeClass != TP_INT &&
+           type1->typeClass != TP_STRING))
+        error(ERR_TYPE_INCONSISTENCY, currentToken->lineNo,
+              currentToken->colNo);
 
       type2 = compileExpression3();
       if (type2 != NULL) {
-        return autoUpcasting(type1, type2);
+        if (type2->typeClass == TP_STRING && type1->typeClass == TP_STRING) {
+          return type2;
+          // hoặc return type1 cũng được
+        }
+        if (type2->typeClass == TP_INT || type2->typeClass == TP_DOUBLE) {
+          return autoUpcasting(type1, type2);
+        }
       }
 
       return type1;
@@ -1081,6 +1182,7 @@ Type* compileExpression3(void) {
     case KW_THEN:
     case KW_WHILE:
     case KW_UNTIL:
+    case KW_BEGIN:
       return NULL;
       break;
     default:
@@ -1089,11 +1191,44 @@ Type* compileExpression3(void) {
   return NULL;
 }
 
+// final term
+// thêm phép toán power
+// định nghĩa: 2**n = 2 ^ n;
+// Vì phép toán power có ưu tiên cao hơn phép toán nhân chia
+// nên phải thêm kí hiệu không kết thúc vào sản xuất của KPL
+// Ban đầu:
+//      Term ::= Factor Term2
+//      Term2 ::= SB_TIMES Factor Term2
+//      Term2 ::= SB_SLASH Factor Term2
+//      Term2 ::= épsilon
+// Sẽ đổi thành:
+//      Term ::= Power Term2
+//      Term2 ::= SB_TIMES Power Term2
+//      Term2 ::= SB_SLASH Power Term2
+//      Term2 ::= épsilon
+//      Power ::= Factor Power2
+//      Power2 ::= SB_POWER Factor Power2
+//      Power2 ::= épsilon
+//
+// thêm 2 hàm compilePower và compilePower2
+// sửa đổi trong compileTerm2 và compileTerm theo như sản xuất lúc sau
+//
+// Có thể bé chưa biết:
+// Tại sao ưu tiên cao hơn thì lại thêm kí hiệu ko kết thúc?
+// hãy nhìn vào sản xuất của KPL:
+// expression là các phép cộng, trừ, ưu tiên thấp nhất
+// term là nhân chia, ưu tiên cao hơn công trừ
+// power là phép lấy mũ, ưu tiên cao hơn nhân chia
+//  -  term là do expression sản xuất ra
+//  Vì expression2 = term + expression3
+//  => power là do term sản xuất ra
+//  => term = power + term2;
 Type* compileTerm(void) {
   Type* type1;
   Type* type2;
 
-  type1 = compileFactor();
+  // ban đầu là type1 = compileFactor()
+  type1 = compilePower();
   type2 = compileTerm2();
 
   if (type2 != NULL) {
@@ -1110,7 +1245,8 @@ Type* compileTerm2(void) {
   switch (lookAhead->tokenType) {
     case SB_TIMES:
       eat(SB_TIMES);
-      type1 = compileFactor();
+      // ban đầu type1 = compileFactor()
+      type1 = compilePower();
       checkNumberType(type1);
 
       type2 = compileTerm2();
@@ -1121,7 +1257,8 @@ Type* compileTerm2(void) {
       break;
     case SB_SLASH:
       eat(SB_SLASH);
-      type1 = compileFactor();
+      // ban đầu type1 = compileFactor()
+      type1 = compilePower();
       checkNumberType(type1);
 
       type2 = compileTerm2();
@@ -1131,11 +1268,14 @@ Type* compileTerm2(void) {
       return type1;
       break;
     // final term
+    // thêm phép toán module:
+    // định nghĩa: 5 % 3 = 2;
     // phép toán module tương đương với phép nhân chia
     // copy đoạn trên xuống rồi sửa SB_SLASH thành SB_MOD
     case SB_MOD:
       eat(SB_MOD);
-      type1 = compileFactor();
+      // ban đầu type1 = compileFactor()
+      type1 = compilePower();
       checkNumberType(type1);
 
       type2 = compileTerm2();
@@ -1167,6 +1307,72 @@ Type* compileTerm2(void) {
     case KW_THEN:
     case KW_WHILE:
     case KW_UNTIL:
+    case KW_BEGIN:
+      break;
+    default:
+      error(ERR_INVALID_TERM, lookAhead->lineNo, lookAhead->colNo);
+  }
+  return NULL;
+}
+// final term compilePower và compilePower2
+// compile power và compile power2 tuân theo cú pháp của KPL sửa đổi
+// cú pháp kpl sửa đổi nằm ở comment phía trên
+Type* compilePower(void) {
+  Type* type1;
+  Type* type2;
+
+  type1 = compileFactor();
+  type2 = compilePower2();
+
+  if (type2 != NULL) {
+    return autoUpcasting(type1, type2);
+  }
+  return type1;
+}
+
+Type* compilePower2(void) {
+  Type* type1;
+  Type* type2;
+
+  switch (lookAhead->tokenType) {
+    case SB_POWER:
+      eat(SB_POWER);
+      type1 = compileFactor();
+      checkNumberType(type1);
+
+      type2 = compilePower2();
+      if (type2 != NULL) {
+        return autoUpcasting(type1, type2);
+      }
+      return type1;
+      break;
+      // check the FOLLOW set
+    case SB_PLUS:
+    case SB_MINUS:
+    case SB_TIMES:
+    case SB_SLASH:
+    case SB_MOD:
+    case KW_TO:
+    case KW_DO:
+    case SB_RPAR:
+    case SB_COMMA:
+    case SB_EQ:
+    case SB_NEQ:
+    case SB_LE:
+    case SB_LT:
+    case SB_GE:
+    case SB_GT:
+    case SB_RSEL:
+    case SB_SEMICOLON:
+    case SB_QUESTION:
+    case SB_COLON:
+    case KW_END:
+    case KW_ELSE:
+    case KW_RETURN:
+    case KW_THEN:
+    case KW_WHILE:
+    case KW_UNTIL:
+    case KW_BEGIN:
       break;
     default:
       error(ERR_INVALID_TERM, lookAhead->lineNo, lookAhead->colNo);
@@ -1174,6 +1380,7 @@ Type* compileTerm2(void) {
   return NULL;
 }
 
+// compile factor không sửa đổi gì
 Type* compileFactor(void) {
   // parse a factor and return the factor's type
 

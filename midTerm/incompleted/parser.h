@@ -47,6 +47,8 @@ void compileWhileSt(void);
 void compileDoSt(void);
 void compileForSt(void);
 void compileRepeatSt(void);
+void compileSwitchSt(void);
+void compileBreakSt(void);
 void compileArgument(Object* param);
 void compileArguments(ObjectNode* paramList);
 void compileCondition(void);
@@ -55,6 +57,8 @@ Type* compileExpression2(void);
 Type* compileExpression3(void);
 Type* compileTerm(void);
 Type* compileTerm2(void);
+Type* compilePower(void);
+Type* compilePower2(void);
 Type* compileFactor(void);
 Type* compileIndexes(Type* arrayType);
 

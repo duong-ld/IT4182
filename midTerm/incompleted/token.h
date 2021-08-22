@@ -9,7 +9,7 @@
 
 #define MAX_IDENT_LEN 15
 #define MAX_STRING_LEN 99
-#define KEYWORDS_COUNT 25
+#define KEYWORDS_COUNT 29
 
 typedef enum {
   TK_NONE,
@@ -51,6 +51,11 @@ typedef enum {
   // câu lệnh repaeat <exp> until <condition>
   KW_REPEAT,
   KW_UNTIL,
+  // câu lệnh switch case
+  KW_SWITCH,
+  KW_CASE,
+  KW_BREAK,
+  KW_DEFAULT,
   // end
 
   SB_SEMICOLON,
@@ -78,6 +83,8 @@ typedef enum {
   SB_QUESTION,
   // dấu % trong phép chia module
   SB_MOD,
+  // bình phương 2**n = 2 ^ n;
+  SB_POWER,
   // phép gán có if, else
   // dấu ::=
   SB_ASSIGN_2

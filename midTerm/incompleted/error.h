@@ -49,4 +49,8 @@ void error(ErrorCode err, int lineNo, int colNo);
 void missingToken(TokenType tokenType, int lineNo, int colNo);
 void assert(char* msg);
 
+// disable return warning of none void function
+#define DO_PRAGMA(X) _Pragma(#X)
+#define DISABLE_RETURN_WARNING DO_PRAGMA(GCC diagnostic ignored "-Wreturn-type")
+
 #endif

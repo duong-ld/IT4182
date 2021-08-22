@@ -119,7 +119,6 @@ Token* readIdentKeyword(void) {
 
   if (count > MAX_IDENT_LEN) {
     error(ERR_IDENT_TOO_LONG, token->lineNo, token->colNo);
-    return token;
   }
 
   token->string[count] = '\0';
@@ -171,7 +170,6 @@ Token* readConstChar(void) {
   if (currentChar == EOF) {
     token->tokenType = TK_NONE;
     error(ERR_INVALID_CONSTANT_CHAR, token->lineNo, token->colNo);
-    return token;
   }
 
   token->string[0] = currentChar;
@@ -181,7 +179,6 @@ Token* readConstChar(void) {
   if (currentChar == EOF) {
     token->tokenType = TK_NONE;
     error(ERR_INVALID_CONSTANT_CHAR, token->lineNo, token->colNo);
-    return token;
   }
 
   if (charCodes[currentChar] == CHAR_SINGLEQUOTE) {
@@ -190,7 +187,7 @@ Token* readConstChar(void) {
   } else {
     token->tokenType = TK_NONE;
     error(ERR_INVALID_CONSTANT_CHAR, token->lineNo, token->colNo);
-    return token;
+    DISABLE_RETURN_WARNING;
   }
 }
 
@@ -248,9 +245,21 @@ Token* getToken(void) {
       token = makeToken(SB_MINUS, lineNo, colNo);
       readChar();
       return token;
+    // final term
+    // Đoán nhận SB_POWER: **
+    // Nhận được 1 *
+    // đọc tiếp kí tự tiếp theo
+    // Nếu kí tự tiếp theo là * thì là SB_POWER
+    // Nếu không thì trả về SB_TIMES (phép nhân)
     case CHAR_TIMES:
-      token = makeToken(SB_TIMES, lineNo, colNo);
+      ln = lineNo;
+      cn = colNo;
       readChar();
+      if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_TIMES)) {
+        readChar();
+        return makeToken(SB_POWER, ln, cn);
+      } else
+        return makeToken(SB_TIMES, ln, cn);
       return token;
     case CHAR_SLASH:
       ln = lineNo;
@@ -299,7 +308,6 @@ Token* getToken(void) {
       } else {
         token = makeToken(TK_NONE, ln, cn);
         error(ERR_INVALID_SYMBOL, ln, cn);
-        return token;
       }
     // final term
     // dấu % trong phép chia module
@@ -379,8 +387,7 @@ Token* getToken(void) {
     default:
       token = makeToken(TK_NONE, lineNo, colNo);
       error(ERR_INVALID_SYMBOL, lineNo, colNo);
-      readChar();
-      return token;
+      DISABLE_RETURN_WARNING;
   }
 }
 
@@ -494,6 +501,14 @@ void printToken(Token* token) {
       printf("KW_REPEAT\n");
     case KW_UNTIL:
       printf("KW_UNTIL\n");
+    case KW_SWITCH:
+      printf("KW_SWITCH\n");
+    case KW_CASE:
+      printf("KW_CASE\n");
+    case KW_DEFAULT:
+      printf("KW_DEFAULT\n");
+    case KW_BREAK:
+      printf("KW_BREAK\n");
 
     case SB_SEMICOLON:
       printf("SB_SEMICOLON\n");
@@ -560,6 +575,9 @@ void printToken(Token* token) {
       break;
     case SB_QUESTION:
       printf("SB_QUESTION\n");
+      break;
+    case SB_POWER:
+      printf("SB_POWER\n");
       break;
   }
 }
