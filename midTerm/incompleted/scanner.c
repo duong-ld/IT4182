@@ -103,6 +103,7 @@ void skipCommentLikeC() {
   }
   readChar();
 }
+
 Token* readIdentKeyword(void) {
   Token* token = makeToken(TK_NONE, lineNo, colNo);
   int count = 1;
@@ -130,11 +131,39 @@ Token* readIdentKeyword(void) {
   return token;
 }
 
-Token* readNumber(void) {
+// final term
+// đọc số trong đó có cả số thập phân
+// số thập phân có 2 trường hợp:
+// TH1: .123 => 0.123
+// TH2: 1.23 => 1.23
+// TH3: 123. => 123.0
+// Trường hợp 2, 3 khá là dễ, chỉ cần đọc được số thì sẽ nhảy vào hàm này
+// ví dụ: đọc được 1 thì sẽ nhảy vào hàm readNumber và đọc tiếp
+// Trường hợp đầu tiên khá khó vì đọc được . thì phải đọc tiếp
+// Nếu sau . là số thì sẽ nhảy vào hàm readNumber
+// Vì số thập phân ko thể là 0.123.123: có 2 dấu . trở lên được
+// cần 1 biến checkDot: để check xem đã nhận dấu chấm nào chưa
+// Và initState để chỉ trang thái dấu chấm đầu vào của hàm
+// Vì khi đọc chuỗi sẽ đọc kí tự đầu tiên rồi nhảy vào hàm
+// Nếu kí tự đầu tiên được đọc đó là dấu chấm tức là initState = 1 còn lại là 0
+// checkDot = initState
+// Ví dụ: .123 thì initState = 1 => checkDot = 1
+//        Đã đọc 1 dấu chấm rồi, không cho phép xuất hiện dấu chấm nữa
+//        1.23 thì initState = 0 => checkDot = 0
+//        Chưa xuất hiện dấu chấm
+Token* readNumber(int initState) {
   Token* token = makeToken(TK_NUMBER, lineNo, colNo);
   int count = 0;
-  int checkDot = 0;
+  int checkDot = initState;
 
+  // Nếu initState = 1 tức là gặp dấu . ở ngay đầu
+  // Ví dụ: .123, .345
+  // => tự động thêm 0. vào đầu chuỗi
+  // sẽ thành 0.123, 0.345
+  if (initState) {
+    token->string[count++] = '0';
+    token->string[count++] = '.';
+  }
   while ((currentChar != EOF) && (charCodes[currentChar] == CHAR_DIGIT ||
                                   charCodes[currentChar] == CHAR_PERIOD)) {
     if (charCodes[currentChar] == CHAR_PERIOD && checkDot == 1)
@@ -236,7 +265,7 @@ Token* getToken(void) {
     case CHAR_LETTER:
       return readIdentKeyword();
     case CHAR_DIGIT:
-      return readNumber();
+      return readNumber(0);
     case CHAR_PLUS:
       token = makeToken(SB_PLUS, lineNo, colNo);
       readChar();
@@ -319,6 +348,12 @@ Token* getToken(void) {
       token = makeToken(SB_COMMA, lineNo, colNo);
       readChar();
       return token;
+    // final term
+    // đọc được dấu chấm
+    // có 3 trường hợp:
+    //      là dấu chấm
+    //      là 1 phần của ngoặc mảng: .)
+    //      là bắt đầu của 1 số thập phân .123
     case CHAR_PERIOD:
       ln = lineNo;
       cn = colNo;
@@ -326,6 +361,9 @@ Token* getToken(void) {
       if ((currentChar != EOF) && (charCodes[currentChar] == CHAR_RPAR)) {
         readChar();
         return makeToken(SB_RSEL, ln, cn);
+      } else if ((currentChar != EOF) &&
+                 (charCodes[currentChar] == CHAR_DIGIT)) {
+        return readNumber(1);
       } else
         return makeToken(SB_PERIOD, ln, cn);
     case CHAR_SEMICOLON:
