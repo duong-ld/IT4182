@@ -1466,6 +1466,17 @@ Type* compileIndexes(Type* arrayType) {
     eat(SB_RSEL);
   }
   return arrayType;
+  // final term
+  // arrayType trả về có thể là TP_ARRAY hoặc TP_INT hoặc TP_DOUBLE
+  // hoặc TP_CHAR hoặc TP_STRING
+  // Nếu muốn phép gán cho phép gán mảng thì chỉ cần return arrayType
+  // Nếu muốn phép gán ko cho phép gán mảng cần kiểm tra arrayType
+  // Nếu arrayType là TP_ARRAY thì báo lỗi
+  // if (arrayType->typeClass != TP_ARRAY) {
+  //   return arrayType;
+  // } else {
+  //   error(ERR_TYPE_INCONSISTENCY, currentToken->lineNo, currentToken->colNo);
+  // }
 }
 
 int compile(char* fileName) {

@@ -418,6 +418,18 @@ Token* getToken(void) {
       token = makeToken(SB_RPAR, lineNo, colNo);
       readChar();
       return token;
+    // final term
+    // chỉ số mảng kiểu C: array[]
+    // Nếu gặp [ thì trả về SB_LSEL
+    // Nếu gặp ] thì trả về SB_RSEL
+    case CHAR_RSEL:
+      token = makeToken(SB_RSEL, lineNo, colNo);
+      readChar();
+      return token;
+    case CHAR_LSEL:
+      token = makeToken(SB_LSEL, lineNo, colNo);
+      readChar();
+      return token;
     case CHAR_QUESTION:
       token = makeToken(SB_QUESTION, lineNo, colNo);
       readChar();

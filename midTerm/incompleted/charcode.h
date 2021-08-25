@@ -30,6 +30,9 @@ typedef enum {
   CHAR_RPAR,
   CHAR_QUESTION,  // final term: phép gán 3 ngôi: ?
   CHAR_MOD,       // final term: phép toán module: 5 % 3 = 2
+  // chỉ số mảng kiểu C: array[]
+  CHAR_RSEL,  // [
+  CHAR_LSEL,  // ]
   CHAR_UNKNOWN
 } CharCode;
 
