@@ -8,7 +8,7 @@ Program Example6;
    Type     t1 = array(. 10 .) of integer;
             t2 = array(. 10 .) of double;
 
-   Var      v1 : Integer;
+   Var      v1, z2, z3 : Integer;
             v3 : Array(. 10 .) of t2;
             v4 : char;
             v5 : double;
@@ -16,7 +16,7 @@ Program Example6;
 
    Function F(p1 : Integer; Var p2 : char) : Integer;
      Begin
-       f := c1;
+       f := z2;
      End;
 
    Function FD(p1 : double; Var p2 : char) : string;

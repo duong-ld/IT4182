@@ -1,4 +1,4 @@
-/* 
+/*
  * @copyright (c) 2008, Hedspi, Hanoi University of Technology
  * @author Huu-Duc Nguyen
  * @version 1.0
@@ -35,7 +35,7 @@ enum ParamKind {
 struct Type_ {
   enum TypeClass typeClass;
   int arraySize;
-  struct Type_ *elementType;
+  struct Type_* elementType;
 };
 
 typedef struct Type_ Type;
@@ -63,33 +63,33 @@ struct ConstantAttributes_ {
 };
 
 struct VariableAttributes_ {
-  Type *type;
-  struct Scope_ *scope;
+  Type* type;
+  struct Scope_* scope;
 };
 
 struct TypeAttributes_ {
-  Type *actualType;
+  Type* actualType;
 };
 
 struct ProcedureAttributes_ {
-  struct ObjectNode_ *paramList;
+  struct ObjectNode_* paramList;
   struct Scope_* scope;
 };
 
 struct FunctionAttributes_ {
-  struct ObjectNode_ *paramList;
+  struct ObjectNode_* paramList;
   Type* returnType;
-  struct Scope_ *scope;
+  struct Scope_* scope;
 };
 
 struct ProgramAttributes_ {
-  struct Scope_ *scope;
+  struct Scope_* scope;
 };
 
 struct ParameterAttributes_ {
   enum ParamKind kind;
   Type* type;
-  struct Object_ *function;
+  struct Object_* function;
 };
 
 typedef struct ConstantAttributes_ ConstantAttributes;
@@ -117,16 +117,16 @@ struct Object_ {
 typedef struct Object_ Object;
 
 struct ObjectNode_ {
-  Object *object;
-  struct ObjectNode_ *next;
+  Object* object;
+  struct ObjectNode_* next;
 };
 
 typedef struct ObjectNode_ ObjectNode;
 
 struct Scope_ {
-  ObjectNode *objList;
-  Object *owner;
-  struct Scope_ *outer;
+  ObjectNode* objList;
+  Object* owner;
+  struct Scope_* outer;
 };
 
 typedef struct Scope_ Scope;
@@ -134,7 +134,7 @@ typedef struct Scope_ Scope;
 struct SymTab_ {
   Object* program;
   Scope* currentScope;
-  ObjectNode *globalObjectList;
+  ObjectNode* globalObjectList;
 };
 
 typedef struct SymTab_ SymTab;
@@ -151,20 +151,20 @@ void freeType(Type* type);
 ConstantValue* makeIntConstant(int i);
 ConstantValue* makeCharConstant(char ch);
 ConstantValue* makeDoubleConstant(double d);
-ConstantValue* makeStringConstant(char *s);
+ConstantValue* makeStringConstant(char* s);
 ConstantValue* duplicateConstantValue(ConstantValue* v);
 
 Scope* createScope(Object* owner, Scope* outer);
 
-Object* createProgramObject(char *programName);
-Object* createConstantObject(char *name);
-Object* createTypeObject(char *name);
-Object* createVariableObject(char *name);
-Object* createFunctionObject(char *name);
-Object* createProcedureObject(char *name);
-Object* createParameterObject(char *name, enum ParamKind kind, Object* owner);
+Object* createProgramObject(char* programName);
+Object* createConstantObject(char* name);
+Object* createTypeObject(char* name);
+Object* createVariableObject(char* name);
+Object* createFunctionObject(char* name);
+Object* createProcedureObject(char* name);
+Object* createParameterObject(char* name, enum ParamKind kind, Object* owner);
 
-Object* findObject(ObjectNode *objList, char *name);
+Object* findObject(ObjectNode* objList, char* name);
 
 void initSymTab(void);
 void cleanSymTab(void);
