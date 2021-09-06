@@ -1,0 +1,68 @@
+Program Test;
+    Const   c1 = 1;
+            c2 = 'a';
+            c3 = "Duong";
+            c4 = 1.5f;
+            c5 = 1.5;
+            c6 = c3;
+
+    Type    t1 = array(. 10 .) of integer;
+            t2 = array(. 10 .) of double;
+
+    Var     v1 : integer;
+            v2, v3 : float;
+            v6 : double;
+            v4 : char;
+            v5 : string;
+    
+    Function F(p1 : Integer; Var p2 : char) : Integer;
+        Begin
+            f := v1;
+        End;
+
+    Function FS(p1 : double; Var p2 : char) : string;
+        Begin
+           fs := c3;
+        End;
+
+    Function FV : Float;
+        Begin
+             FV := c4;
+        End;
+
+    Procedure p(z1 : integer);
+        const   c1 = 2.0f;
+        type    t1 = double;
+                t2 = array(. 10 .) of t1;
+        var     v1 : t2;
+                v2, z2 : t1;
+                v3 : String;
+                i1  : integer;
+
+        begin
+            v3 := fs(i1, v4);
+            for i1 := 3 to 10 do
+                v2 := 3 > 2? 3 : 2
+        end;
+    
+    BEGIN
+        // test assign
+        v1 := 1;
+        v2, v3, v6, v5 := 1.5f, 3 % 4 > f(c1, v4) ? 3.14F : 4 * 5.5f, 3.14, "Duong";
+        // test call proceduce
+        call p(c1);
+        // test merge String
+        v5 := FS(v6, v4) + "Hello World";
+        /*
+        */
+        // test comment /* */
+        /*
+        v6 := v3 + asfawefewafawef
+        */
+        repeat 
+            while v1 > 4 do 
+                do
+                    v1 := v1 + 1
+                while v1 > 4
+        until v1 = 3;
+    End.
