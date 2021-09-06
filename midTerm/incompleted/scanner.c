@@ -559,7 +559,9 @@ void printToken(Token* token) {
       printf("KW_DEFAULT\n");
     case KW_BREAK:
       printf("KW_BREAK\n");
-
+    case KW_SUM:
+      printf("KW_SUM\n");
+      
     case SB_SEMICOLON:
       printf("SB_SEMICOLON\n");
       break;

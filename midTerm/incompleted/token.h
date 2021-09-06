@@ -9,7 +9,7 @@
 
 #define MAX_IDENT_LEN 15
 #define MAX_STRING_LEN 99
-#define KEYWORDS_COUNT 29
+#define KEYWORDS_COUNT 30
 
 typedef enum {
   TK_NONE,
@@ -56,6 +56,9 @@ typedef enum {
   KW_CASE,
   KW_BREAK,
   KW_DEFAULT,
+  // câu lệnh sum 
+  // sum <exp>, <exp>, ...
+  KW_SUM,
   // end
 
   SB_SEMICOLON,

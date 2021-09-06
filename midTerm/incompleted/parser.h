@@ -49,6 +49,7 @@ void compileForSt(void);
 void compileRepeatSt(void);
 void compileSwitchSt(void);
 void compileBreakSt(void);
+void compileSumSt(void);
 void compileArgument(Object* param);
 void compileArguments(ObjectNode* paramList);
 void compileCondition(void);

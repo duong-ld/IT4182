@@ -56,6 +56,7 @@ Begin
      v3[9](. 8 .), v4, v6 := 3 % 4 > f(c1,v4) ? 3.14 : 3 ** f(c1, v4) + 5, 's', "hello";
      call p(c1);
      v1, v4, v5, v6 := c1, 3 > 4? 'c': 'a', c1, "Duong" + "hello";
+      sum 1 + 2, 2 + 3, 3 + 4, 4.5 * 5;
      repeat 
       while v1 > 4 do 
          while v1 = 6 / 1 do 

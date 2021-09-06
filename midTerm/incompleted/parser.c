@@ -117,6 +117,7 @@ void compileBlock3(void) {
   Object** varObjList = (Object**) malloc(sizeof(Object*) * MAX_ASSIGN);
   int index = 0;
   Type* varType;
+  
   // keyword var ở ngay đầu đoạn khai báo biến
   if (lookAhead->tokenType == KW_VAR) {
     eat(KW_VAR);
@@ -124,6 +125,8 @@ void compileBlock3(void) {
     // khai báo các biến
     do {
       // mỗi dòng có thể có nhiều biến thay vì chỉ là 1 biến như ban đầu
+      // ban đầu var x: integer;
+      // lúc sau var x, y, z: integer;
       // cần một mảng varObjList để chứa các biến thay vì chỉ varObj
       // index là chỉ số của mảng
       // bắt đầu một dòng reset index về 0
@@ -501,6 +504,8 @@ void compileStatement(void) {
   case KW_BREAK:
     compileBreakSt();
     break;
+  case KW_SUM:
+    compileSumSt();
     // Trong trường hợp statement rỗng
     // Token tiếp theo sẽ là follow của statement
     // Ví dụ như:
@@ -508,7 +513,7 @@ void compileStatement(void) {
     // Sau <then> đáng lẽ phải là 1 statement nhưng statement này rỗng
     // nên sau <then> sẽ là <else>
     // theo đúng thứ tự compileIfSt()
-    // eat(IF
+    // eat(IF)
     // compileCondition()
     // eat(THEN)
     // compileStatement()
@@ -936,6 +941,23 @@ void compileSwitchSt(void) {
 // do lệnh break nằm bên trong statements nên coi nó như 1 statement
 void compileBreakSt(void) {
   eat(KW_BREAK);
+}
+
+// final term 
+// thêm câu lệnh sum
+// sum <expression>, <expression>, ...
+// các expression đều phải trả về số
+// sum "Hello", 1 + 2 là sai cú pháp
+void compileSumSt(void) {
+  Type* type;
+  eat(KW_SUM);
+  type = compileExpression();
+  checkNumberType(type);
+  while (lookAhead->tokenType == SB_COMMA) {
+    eat(SB_COMMA);
+    type = compileExpression();
+    checkNumberType(type);
+  }
 }
 
 void compileForSt(void) {
