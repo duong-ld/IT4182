@@ -1,0 +1,14 @@
+Program Factorial;
+    Var input   : integer;
+        result  : integer;   
+    Function f(n : integer) : integer;
+        Begin
+            if n = 0 then f := 1
+            else f := n * f(n-1);
+        End;
+
+    Begin
+        input := ReadI;
+        result := f(input);
+        Call WriteI(result);
+    END.

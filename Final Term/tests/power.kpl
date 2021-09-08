@@ -1,0 +1,15 @@
+Program PowerOfTwo;
+    Var input   : integer;
+        result  : integer;
+
+    Function F(n : integer) : integer;
+        Begin
+            if n = 0 then F := 1
+            else F := 2 * F(n-1);
+        End;
+    
+    Begin
+        input := ReadI;
+        result := F(input);
+        Call WriteI(result);
+    End.

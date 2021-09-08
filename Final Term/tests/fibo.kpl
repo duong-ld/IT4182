@@ -1,0 +1,16 @@
+Program Fibo;
+    Var input   : integer;
+        result  : integer;
+    Function F(n: Integer) : Integer;
+        Begin
+            if n = 0 then f := 0;
+            if n = 1 then f := 1;
+            if n > 1 then f := F(n-1) + F(n-2);
+        End;
+    
+    BEGIN
+        input := READI;
+        result := F(input);
+        CALL WRITEI(result);
+        CALL WRITELN;
+    END.

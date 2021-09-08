@@ -1,0 +1,22 @@
+Program ArrayNumber;
+    var input : integer;
+    
+    Procedure PrintArray(n : integer);
+        Var even : integer;
+        Begin
+            Call WriteI(n);
+            if n != 1 then
+                Begin
+                    Call WriteC(',');
+                    Call WriteC(' ');
+                    even := n / 2;
+                    if even * 2 = n then n := even
+                    else n := 3 * n + 1;
+                    Call PrintArray(n);
+                End
+        End;
+    
+    BEGIN
+        input := ReadI;
+        Call PrintArray(input);
+    END.
