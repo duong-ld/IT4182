@@ -1,0 +1,9 @@
+Program Swap;
+    Var x : integer;
+        y : integer;
+    
+    BEGIN
+        x := ReadI;
+        y := ReadI;
+        x, y := y, x;
+    END.
